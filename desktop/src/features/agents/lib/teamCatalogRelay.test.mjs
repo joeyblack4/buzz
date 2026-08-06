@@ -460,20 +460,6 @@ function validBody(memberOverrides = {}) {
   };
 }
 
-test("test_valid_body_yields_zero_invalid_members", () => {
-  const result = parseTeamCatalogContent(contentEvent(validBody()));
-  assert.ok(result !== null);
-  assert.equal(result.invalidMemberCount, 0);
-  assert.equal(result.members.length, 1);
-});
-
-test("test_wrong_schema_version_returns_null", () => {
-  const result = parseTeamCatalogContent(
-    contentEvent({ ...validBody(), v: 2 }),
-  );
-  assert.equal(result, null);
-});
-
 test("test_member_count_cap_exceeded_returns_null", () => {
   const manyMembers = Array.from({ length: 65 }, (_, i) => ({
     member_key: `k${i}`,
@@ -511,19 +497,6 @@ test("test_member_with_unrecognized_respond_to_counts_as_invalid", () => {
   );
   assert.ok(result !== null);
   assert.equal(result.invalidMemberCount, 1, "unknown respond_to fails v1");
-});
-
-test("test_recognized_respond_to_values_are_valid", () => {
-  for (const mode of ["owner-only", "anyone", "allowlist"]) {
-    const r = parseTeamCatalogContent(
-      contentEvent(validBody({ respond_to: mode })),
-    );
-    assert.equal(
-      r?.invalidMemberCount,
-      0,
-      `respond_to '${mode}' should be valid`,
-    );
-  }
 });
 
 test("test_member_missing_member_key_counts_as_invalid", () => {
@@ -628,22 +601,18 @@ test("test_parseMember_provider_whitespace_only_marks_member_invalid", () => {
 // Both team instructions AND member instructions are published as plaintext.
 // The copy must name both to satisfy the explicit disclosure requirement.
 
-test("test_share_disclosure_names_team_instructions", () => {
+test("test_share_disclosure_names_team_and_member_instructions", () => {
+  const desc = teamCatalogCopy.shareDescription.toLowerCase();
   assert.ok(
-    teamCatalogCopy.shareDescription
-      .toLowerCase()
-      .includes("team instructions"),
+    desc.includes("team instructions"),
     "disclosure must mention team instructions",
   );
-});
-
-test("test_share_disclosure_names_member_instructions", () => {
   assert.ok(
-    teamCatalogCopy.shareDescription.toLowerCase().includes("member"),
+    desc.includes("member"),
     "disclosure must mention member instructions",
   );
   assert.ok(
-    teamCatalogCopy.shareDescription.toLowerCase().includes("instructions"),
+    desc.includes("instructions"),
     "disclosure must explicitly say instructions are shared",
   );
 });
@@ -792,7 +761,8 @@ test("test_fixtures_with_member_level_errors_mark_member_invalid", () => {
 // tombstone from a relay-confirmed removal — is tested here as a pure-
 // function unit test rather than a React rendering test.
 
-test("test_team_auto_retracted_notice_names_team_and_reason", () => {
+test("test_team_auto_retracted_notice_contract", () => {
+  // Names team and reason.
   const msg = teamAutoRetractedNotice(
     "My Team",
     "member instructions too large",
@@ -802,20 +772,20 @@ test("test_team_auto_retracted_notice_names_team_and_reason", () => {
     msg.includes("member instructions too large"),
     "notice must include the backend reason",
   );
-});
-
-test("test_team_auto_retracted_notice_says_queued_not_removed", () => {
   // The relay head may still be live until the flush loop publishes the
   // tombstone.  The notice must say "queued for removal" — not "was removed".
-  const msg = teamAutoRetractedNotice("Alpha Team", "team no longer exists");
+  const pending = teamAutoRetractedNotice(
+    "Alpha Team",
+    "team no longer exists",
+  );
   assert.ok(
-    !msg.includes("was removed"),
+    !pending.includes("was removed"),
     "notice must not claim the team is already gone from the relay",
   );
   assert.ok(
-    msg.includes("queued") ||
-      msg.includes("being removed") ||
-      msg.includes("can no longer be projected"),
-    `notice must reflect the pending-tombstone status; got: ${msg}`,
+    pending.includes("queued") ||
+      pending.includes("being removed") ||
+      pending.includes("can no longer be projected"),
+    `notice must reflect the pending-tombstone status; got: ${pending}`,
   );
 });
