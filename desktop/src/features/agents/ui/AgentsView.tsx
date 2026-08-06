@@ -551,7 +551,9 @@ export function AgentsView() {
           teamsLoading={teamActions.catalogQuery.isLoading}
           teamsAdding={teamActions.isAddingFromCatalog}
           onAddTeam={(team) => {
-            void teamActions.handleAddTeamFromCatalog(team);
+            void teamActions.handleAddTeamFromCatalog(team, () =>
+              setCatalogLaunchTarget(null),
+            );
           }}
           // Dialog
           open={catalogLaunchTarget !== null}

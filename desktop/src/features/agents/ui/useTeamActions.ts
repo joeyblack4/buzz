@@ -319,7 +319,10 @@ export function useTeamActions(
    * retracted or republished while the dialog sat open fails loudly here
    * rather than copying a stale projection.
    */
-  async function handleAddTeamFromCatalog(team: CatalogTeam): Promise<void> {
+  async function handleAddTeamFromCatalog(
+    team: CatalogTeam,
+    onSuccess?: () => void,
+  ): Promise<void> {
     actions.setActionNoticeMessage(null);
     actions.setActionErrorMessage(null);
     try {
@@ -334,6 +337,7 @@ export function useTeamActions(
           : `Added ${result.team.name} to your teams.`,
       );
       setIsCatalogDialogOpen(false);
+      onSuccess?.();
     } catch (error) {
       actions.setActionErrorMessage(
         error instanceof Error ? error.message : "Failed to add team.",
