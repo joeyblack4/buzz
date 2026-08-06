@@ -54,6 +54,44 @@ function createTeamCatalogEvent(input: {
   };
 }
 
+/** A kind:30175 head, shaped exactly as `persona_catalog_content` projects it. */
+function createPersonaCatalogEvent(input: {
+  ownerPubkey: string;
+  sourcePersonaId: string;
+  displayName: string;
+  systemPrompt: string;
+}): RelayEvent {
+  return {
+    id: "c".repeat(64),
+    pubkey: input.ownerPubkey,
+    created_at: 1_721_750_400,
+    kind: 30175,
+    tags: [
+      ["d", input.sourcePersonaId],
+      ["shared", "true"],
+    ],
+    content: JSON.stringify({
+      display_name: input.displayName,
+      system_prompt: input.systemPrompt,
+      avatar_url: null,
+      runtime: null,
+      model: null,
+      provider: null,
+      name_pool: [],
+    }),
+    sig: "2".repeat(128),
+  };
+}
+
+const PERSONA_CATALOG_EVENTS: RelayEvent[] = [
+  createPersonaCatalogEvent({
+    ownerPubkey: TEST_IDENTITIES.bob.pubkey,
+    sourcePersonaId: "code-reviewer",
+    displayName: "Code Reviewer",
+    systemPrompt: "Review pull requests for correctness and edge cases.",
+  }),
+];
+
 const CATALOG_EVENTS: RelayEvent[] = [
   createTeamCatalogEvent({
     eventId: "a".repeat(64),
@@ -230,5 +268,26 @@ test.describe("team catalog screenshots", () => {
     ).toBeVisible();
     await waitForAnimations(page);
     await page.screenshot({ path: `${SHOTS}/share-published.png` });
+  });
+
+  test("04 — both sections populated (agents + teams)", async ({ page }) => {
+    await installMockBridge(page, {
+      personaCatalogEvents: PERSONA_CATALOG_EVENTS,
+      teamCatalogEvents: CATALOG_EVENTS,
+    });
+    await gotoAgentsView(page);
+    await openTeamCatalog(page);
+
+    // The Agents section header is visible alongside Teams in the sidebar.
+    await expect(
+      page.locator('[data-testid^="community-catalog-agent-"]'),
+    ).toHaveCount(1);
+    await expect(
+      page.locator('[data-testid^="community-catalog-team-"]'),
+    ).toHaveCount(2);
+    await waitForAnimations(page);
+    await page.getByTestId("community-catalog-dialog").screenshot({
+      path: `${SHOTS}/catalog-both-sections.png`,
+    });
   });
 });

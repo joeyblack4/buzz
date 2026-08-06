@@ -88,7 +88,6 @@ export function useTeamActions(
     null,
   );
   const [teamToShare, setTeamToShare] = React.useState<AgentTeam | null>(null);
-  const [isCatalogDialogOpen, setIsCatalogDialogOpen] = React.useState(false);
   const [teamSnapshotImportState, setTeamSnapshotImportState] = React.useState<{
     fileBytes: number[];
     fileName: string;
@@ -265,13 +264,6 @@ export function useTeamActions(
     setTeamToShare(team);
   }
 
-  function openCatalog() {
-    actions.setActionNoticeMessage(null);
-    actions.setActionErrorMessage(null);
-    void catalogQuery.refetch();
-    setIsCatalogDialogOpen(true);
-  }
-
   function getTeamCatalogShareLevel(team: AgentTeam): CatalogShareLevel {
     return team.shared ? "none" : "not-shared";
   }
@@ -336,7 +328,6 @@ export function useTeamActions(
           ? `${result.team.name} is already in your teams.`
           : `Added ${result.team.name} to your teams.`,
       );
-      setIsCatalogDialogOpen(false);
       onSuccess?.();
     } catch (error) {
       actions.setActionErrorMessage(
@@ -431,8 +422,6 @@ export function useTeamActions(
     teamsQuery,
     catalogQuery,
     catalogTeams,
-    isCatalogDialogOpen,
-    setIsCatalogDialogOpen,
     isAddingFromCatalog: addTeamFromCatalogMutation.isPending,
     isCatalogSharePending: setCatalogSharedMutation.isPending,
     createTeamMutation,
@@ -462,7 +451,6 @@ export function useTeamActions(
     openEditDialog,
     openExportSnapshot,
     openShare,
-    openCatalog,
     getTeamCatalogShareLevel,
     setTeamCatalogShareLevel,
     handleAddTeamFromCatalog,

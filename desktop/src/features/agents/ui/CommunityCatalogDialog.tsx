@@ -159,8 +159,11 @@ export function CommunityCatalogDialog({
   const selectedTeamIsAdded = selectedTeam?.localTeam != null;
   const selectedTeamIsInvalid = (selectedTeam?.invalidMemberCount ?? 0) > 0;
 
-  const isLoading = personasLoading || teamsLoading;
-  const bothEmpty = !isLoading && personas.length === 0 && teams.length === 0;
+  const bothEmpty =
+    !personasLoading &&
+    !teamsLoading &&
+    personas.length === 0 &&
+    teams.length === 0;
   const noError = !personasError && !teamsError;
 
   function handleUseAgent() {
@@ -203,7 +206,7 @@ export function CommunityCatalogDialog({
                 className="min-h-0 flex-1 overflow-y-auto px-2 py-3"
                 data-testid="community-catalog-dialog-scroll-area"
               >
-                {isLoading ? <CatalogListSkeleton /> : null}
+                {personasLoading ? <CatalogListSkeleton /> : null}
 
                 {!personasLoading && personas.length > 0 ? (
                   <div className="mb-1">
@@ -242,6 +245,8 @@ export function CommunityCatalogDialog({
                     </div>
                   </div>
                 ) : null}
+
+                {teamsLoading ? <CatalogListSkeleton /> : null}
 
                 {!teamsLoading && teams.length > 0 ? (
                   <div className="mb-1">
@@ -287,13 +292,15 @@ export function CommunityCatalogDialog({
                 className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto px-5 pb-24 pt-5"
                 data-testid="community-catalog-detail-pane"
               >
-                {isLoading ? <CatalogDetailSkeleton /> : null}
+                {personasLoading && teamsLoading ? (
+                  <CatalogDetailSkeleton />
+                ) : null}
 
-                {!isLoading && selectedPersona ? (
+                {!personasLoading && selectedPersona ? (
                   <PersonaCatalogDetail persona={selectedPersona} />
                 ) : null}
 
-                {!isLoading && selectedTeam ? (
+                {!teamsLoading && selectedTeam ? (
                   <TeamCatalogDetail team={selectedTeam} />
                 ) : null}
 
