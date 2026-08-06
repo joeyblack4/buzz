@@ -118,7 +118,7 @@ async function gotoAgentsView(page: import("@playwright/test").Page) {
 async function openTeamCatalog(page: import("@playwright/test").Page) {
   await page.getByTestId("new-team-card").click();
   await page.getByTestId("team-catalog-open").click();
-  await expect(page.getByTestId("team-catalog-dialog")).toBeVisible();
+  await expect(page.getByTestId("community-catalog-dialog")).toBeVisible();
   await waitForAnimations(page);
 }
 
@@ -133,31 +133,31 @@ test.describe("team catalog screenshots", () => {
 
     // 1. Browsing another member's publication: list, provenance, per-member
     //    model. Release Review is not the default selection, so click it.
-    const releaseReview = `team-catalog-list-item-${TEST_IDENTITIES.alice.pubkey}:release-review`;
+    const releaseReview = `community-catalog-team-${TEST_IDENTITIES.alice.pubkey}:release-review`;
     await page.getByTestId(releaseReview).click();
     await waitForAnimations(page);
-    await page.getByTestId("team-catalog-dialog").screenshot({
+    await page.getByTestId("community-catalog-dialog").screenshot({
       path: `${SHOTS}/catalog-browse.png`,
     });
 
     // 2. Expand the Reviewer member row to show metadata + instruction.
-    await page.getByTestId("team-catalog-member-expand-reviewer").click();
+    await page.getByTestId("community-catalog-member-expand-reviewer").click();
     await waitForAnimations(page);
-    await page.getByTestId("team-catalog-dialog").screenshot({
+    await page.getByTestId("community-catalog-dialog").screenshot({
       path: `${SHOTS}/catalog-member-expanded.png`,
     });
 
     // 3. Team instructions section is visible (Release Review has instructions).
     //    Collapse the expanded member row first so the team-instructions state
     //    is visually distinct from the expanded-member screenshot above.
-    await page.getByTestId("team-catalog-member-expand-reviewer").click();
+    await page.getByTestId("community-catalog-member-expand-reviewer").click();
     await waitForAnimations(page);
-    await page.getByTestId("team-catalog-dialog").screenshot({
+    await page.getByTestId("community-catalog-dialog").screenshot({
       path: `${SHOTS}/catalog-team-instructions.png`,
     });
 
     // 4. Adding closes the dialog and names the team in the notice.
-    await page.getByTestId("team-catalog-add-team").click();
+    await page.getByTestId("community-catalog-add-team").click();
     await expect(
       page.getByText("Added Release Review to your teams."),
     ).toBeVisible();
@@ -166,11 +166,11 @@ test.describe("team catalog screenshots", () => {
     //    second copy of the same publication is not offered.
     await openTeamCatalog(page);
     await page.getByTestId(releaseReview).click();
-    await expect(page.getByTestId("team-catalog-add-team")).toHaveText(
+    await expect(page.getByTestId("community-catalog-add-team")).toHaveText(
       "Added to my teams",
     );
     await waitForAnimations(page);
-    await page.getByTestId("team-catalog-dialog").screenshot({
+    await page.getByTestId("community-catalog-dialog").screenshot({
       path: `${SHOTS}/catalog-added.png`,
     });
   });
@@ -180,7 +180,7 @@ test.describe("team catalog screenshots", () => {
     await gotoAgentsView(page);
     await openTeamCatalog(page);
 
-    await page.getByTestId("team-catalog-dialog").screenshot({
+    await page.getByTestId("community-catalog-dialog").screenshot({
       path: `${SHOTS}/catalog-empty.png`,
     });
   });

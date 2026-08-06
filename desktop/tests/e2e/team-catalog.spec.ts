@@ -64,7 +64,7 @@ async function gotoAgentsView(page: import("@playwright/test").Page) {
 async function openTeamCatalog(page: import("@playwright/test").Page) {
   await page.getByTestId("new-team-card").click();
   await page.getByTestId("team-catalog-open").click();
-  await expect(page.getByTestId("team-catalog-dialog")).toBeVisible();
+  await expect(page.getByTestId("community-catalog-dialog")).toBeVisible();
 }
 
 async function openTeamShareDialog(
@@ -136,9 +136,9 @@ test("an unshared kind 30178 head from another member is not offered", async ({
   await gotoAgentsView(page);
   await openTeamCatalog(page);
 
-  await expect(page.getByTestId("team-catalog-empty-state")).toBeVisible();
+  await expect(page.getByTestId("community-catalog-empty-state")).toBeVisible();
   await expect(
-    page.locator('[data-testid^="team-catalog-list-item-"]'),
+    page.locator('[data-testid^="community-catalog-team-"]'),
   ).toHaveCount(0);
 });
 
@@ -160,21 +160,21 @@ test("adding another member's team records its catalog provenance", async ({
   await gotoAgentsView(page);
   await openTeamCatalog(page);
 
-  const entry = page.getByTestId(`team-catalog-list-item-${entryKey}`);
+  const entry = page.getByTestId(`community-catalog-team-${entryKey}`);
   await expect(entry).toContainText("Alice’s Review Crew");
   await entry.click();
 
-  const detail = page.getByTestId("team-catalog-detail-pane");
+  const detail = page.getByTestId("community-catalog-detail-pane");
   await expect(detail).toContainText("Added by alice");
   await expect(detail).toContainText("2 members");
-  await expect(page.getByTestId("team-catalog-member-reviewer")).toContainText(
-    "Alice’s Reviewer",
-  );
-  await expect(page.getByTestId("team-catalog-member-scribe")).toContainText(
-    "Alice’s Scribe",
-  );
+  await expect(
+    page.getByTestId("community-catalog-member-reviewer"),
+  ).toContainText("Alice’s Reviewer");
+  await expect(
+    page.getByTestId("community-catalog-member-scribe"),
+  ).toContainText("Alice’s Scribe");
 
-  await page.getByTestId("team-catalog-add-team").click();
+  await page.getByTestId("community-catalog-add-team").click();
   await expect(
     page.getByText("Added Alice’s Review Crew to your teams."),
   ).toBeVisible();
@@ -192,8 +192,8 @@ test("adding another member's team records its catalog provenance", async ({
   expect(added?.persona_ids).toHaveLength(2);
 
   await openTeamCatalog(page);
-  await page.getByTestId(`team-catalog-list-item-${entryKey}`).click();
-  const addButton = page.getByTestId("team-catalog-add-team");
+  await page.getByTestId(`community-catalog-team-${entryKey}`).click();
+  const addButton = page.getByTestId("community-catalog-add-team");
   await expect(addButton).toHaveText("Added to my teams");
   await expect(addButton).toBeDisabled();
   expect(
@@ -219,7 +219,7 @@ test("a head that moved while the dialog was open is rejected", async ({
   });
   await gotoAgentsView(page);
   await openTeamCatalog(page);
-  await page.getByTestId(`team-catalog-list-item-${entryKey}`).click();
+  await page.getByTestId(`community-catalog-team-${entryKey}`).click();
 
   // Republish the coordinate without notifying subscribers: the dialog keeps
   // rendering — and keeps holding — the superseded event id.
@@ -255,7 +255,7 @@ test("a head that moved while the dialog was open is rejected", async ({
     { ownerPubkey: TEST_IDENTITIES.alice.pubkey, teamDTag: ALICE_TEAM_D_TAG },
   );
 
-  await page.getByTestId("team-catalog-add-team").click();
+  await page.getByTestId("community-catalog-add-team").click();
   await expect(
     page.getByText(
       "This team was updated since you opened the catalog. Reopen it and try again.",
@@ -305,7 +305,7 @@ test("a lower-id head at the same timestamp is correctly selected as canonical a
   await gotoAgentsView(page);
   await openTeamCatalog(page);
   // The UI rendered the lower-id head (canonical); click to open the detail.
-  await page.getByTestId(`team-catalog-list-item-${entryKey}`).click();
+  await page.getByTestId(`community-catalog-team-${entryKey}`).click();
 
   // Silently replace the stored head with the higher-id event (same timestamp).
   // The dialog still holds LOWER_ID; the bridge now considers HIGHER_ID
@@ -342,7 +342,7 @@ test("a lower-id head at the same timestamp is correctly selected as canonical a
     { ownerPubkey: TEST_IDENTITIES.alice.pubkey, teamDTag: ALICE_TEAM_D_TAG },
   );
 
-  await page.getByTestId("team-catalog-add-team").click();
+  await page.getByTestId("community-catalog-add-team").click();
   await expect(
     page.getByText(
       "This team was updated since you opened the catalog. Reopen it and try again.",
@@ -373,7 +373,7 @@ test("sharing a team publishes it to the catalog and unsharing retracts it", asy
   await gotoAgentsView(page);
 
   await openTeamCatalog(page);
-  await expect(page.getByTestId("team-catalog-empty-state")).toBeVisible();
+  await expect(page.getByTestId("community-catalog-empty-state")).toBeVisible();
   await page.keyboard.press("Escape");
 
   await openTeamShareDialog(page, "Release Crew");
@@ -390,14 +390,14 @@ test("sharing a team publishes it to the catalog and unsharing retracts it", asy
     .click();
 
   await openTeamCatalog(page);
-  const ownEntry = page.locator('[data-testid^="team-catalog-list-item-"]');
+  const ownEntry = page.locator('[data-testid^="community-catalog-team-"]');
   await expect(ownEntry).toHaveCount(1);
   await ownEntry.click();
-  await expect(page.getByTestId("team-catalog-detail-pane")).toContainText(
+  await expect(page.getByTestId("community-catalog-detail-pane")).toContainText(
     "Added by You",
   );
   // The publisher already has the team, so the catalog must not offer a copy.
-  await expect(page.getByTestId("team-catalog-add-team")).toBeDisabled();
+  await expect(page.getByTestId("community-catalog-add-team")).toBeDisabled();
   await page.keyboard.press("Escape");
 
   await openTeamShareDialog(page, "Release Crew");
@@ -413,7 +413,7 @@ test("sharing a team publishes it to the catalog and unsharing retracts it", asy
     .click();
 
   await openTeamCatalog(page);
-  await expect(page.getByTestId("team-catalog-empty-state")).toBeVisible();
+  await expect(page.getByTestId("community-catalog-empty-state")).toBeVisible();
 });
 
 test("a queued team share is not presented as relay-published", async ({
@@ -452,7 +452,7 @@ test("a queued team share is not presented as relay-published", async ({
     .click();
 
   await openTeamCatalog(page);
-  await expect(page.getByTestId("team-catalog-empty-state")).toBeVisible();
+  await expect(page.getByTestId("community-catalog-empty-state")).toBeVisible();
 });
 
 test("expanding a member row reveals its metadata and instruction", async ({
@@ -480,20 +480,20 @@ test("expanding a member row reveals its metadata and instruction", async ({
   });
   await gotoAgentsView(page);
   await openTeamCatalog(page);
-  await page.getByTestId(`team-catalog-list-item-${entryKey}`).click();
+  await page.getByTestId(`community-catalog-team-${entryKey}`).click();
 
-  const memberRow = page.getByTestId("team-catalog-member-reviewer");
+  const memberRow = page.getByTestId("community-catalog-member-reviewer");
   await expect(memberRow).toBeVisible();
 
   // Metadata card and instruction are hidden before expansion.
   await expect(memberRow.getByTestId("agent-definition-metadata")).toBeHidden();
 
   // Expand the row.
-  await page.getByTestId("team-catalog-member-expand-reviewer").click();
+  await page.getByTestId("community-catalog-member-expand-reviewer").click();
 
   // aria-expanded transitions to true.
   await expect(
-    page.getByTestId("team-catalog-member-expand-reviewer"),
+    page.getByTestId("community-catalog-member-expand-reviewer"),
   ).toHaveAttribute("aria-expanded", "true");
 
   // Metadata card is now visible and contains model/runtime/provider.
@@ -531,12 +531,12 @@ test("expanding a member with no system prompt shows the no-instructions placeho
   });
   await gotoAgentsView(page);
   await openTeamCatalog(page);
-  await page.getByTestId(`team-catalog-list-item-${entryKey}`).click();
+  await page.getByTestId(`community-catalog-team-${entryKey}`).click();
 
-  await page.getByTestId("team-catalog-member-expand-reviewer").click();
-  await expect(page.getByTestId("team-catalog-member-reviewer")).toContainText(
-    "No instructions",
-  );
+  await page.getByTestId("community-catalog-member-expand-reviewer").click();
+  await expect(
+    page.getByTestId("community-catalog-member-reviewer"),
+  ).toContainText("No instructions");
 });
 
 test("team instructions section is visible when the team has instructions set", async ({
@@ -556,9 +556,9 @@ test("team instructions section is visible when the team has instructions set", 
   });
   await gotoAgentsView(page);
   await openTeamCatalog(page);
-  await page.getByTestId(`team-catalog-list-item-${entryKey}`).click();
+  await page.getByTestId(`community-catalog-team-${entryKey}`).click();
 
-  const detail = page.getByTestId("team-catalog-detail-pane");
+  const detail = page.getByTestId("community-catalog-detail-pane");
   await expect(detail).toContainText("Team instructions");
   await expect(detail).toContainText("Always check for security issues first.");
 });
@@ -579,8 +579,8 @@ test("team instructions section is absent when instructions are not set", async 
   });
   await gotoAgentsView(page);
   await openTeamCatalog(page);
-  await page.getByTestId(`team-catalog-list-item-${entryKey}`).click();
+  await page.getByTestId(`community-catalog-team-${entryKey}`).click();
 
-  const detail = page.getByTestId("team-catalog-detail-pane");
+  const detail = page.getByTestId("community-catalog-detail-pane");
   await expect(detail).not.toContainText("Team instructions");
 });

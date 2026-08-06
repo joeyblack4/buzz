@@ -8,14 +8,13 @@ import { AddAgentToChannelDialog } from "./AddAgentToChannelDialog";
 import { AddTeamToChannelDialog } from "./AddTeamToChannelDialog";
 import { AgentDefaultsDialog } from "./AgentDefaultsDialog";
 import { AgentDialog } from "./AgentDialog";
-import { PersonaCatalogDialog } from "./PersonaCatalogDialog";
+import { CommunityCatalogDialog } from "./CommunityCatalogDialog";
 import { PersonaDeleteDialog } from "./PersonaDeleteDialog";
 import { PersonaShareDialog } from "./PersonaShareDialog";
 import { AgentSnapshotExportDialog } from "./AgentSnapshotExportDialog";
 import { AgentSnapshotImportDialog } from "./AgentSnapshotImportDialog";
 import { TeamSnapshotExportDialog } from "./TeamSnapshotExportDialog";
 import { TeamSnapshotImportDialog } from "./TeamSnapshotImportDialog";
-import { TeamCatalogDialog } from "./TeamCatalogDialog";
 import { TeamShareDialog } from "./TeamShareDialog";
 import { SecretRevealDialog } from "./SecretRevealDialog";
 import { TeamDeleteDialog } from "./TeamDeleteDialog";
@@ -85,6 +84,20 @@ export function AgentsView() {
       refetchRelayAgents: agents.refetchRelayAgents,
     },
   );
+
+  // Parent-owned unified catalog state per Thufir's corrective:
+  // - discriminated launch target so both sections refetch on open
+  // - one close owner via this boolean
+  const [catalogLaunchTarget, setCatalogLaunchTarget] = React.useState<
+    "agents" | "teams" | null
+  >(null);
+
+  function openCommunityCatalog(target: "agents" | "teams") {
+    personas.clearFeedback("catalog");
+    void personas.catalogQuery.refetch();
+    void teamActions.catalogQuery.refetch();
+    setCatalogLaunchTarget(target);
+  }
 
   const isActionPending =
     agents.isPending ||
@@ -263,7 +276,7 @@ export function AgentsView() {
               isPersonasLoading={personas.personasQuery.isLoading}
               isPersonasPending={personas.isPending}
               onCreatePersona={openUnifiedCreate}
-              onDiscoverPersonas={personas.openCatalog}
+              onDiscoverPersonas={() => openCommunityCatalog("agents")}
               onDuplicatePersona={personas.openDuplicate}
               onEditPersona={personas.openEdit}
               onSharePersona={personas.openShare}
@@ -293,7 +306,7 @@ export function AgentsView() {
               onDuplicate={teamActions.openDuplicateDialog}
               onEdit={teamActions.openEditDialog}
               onAddToChannel={teamActions.setTeamToAddToChannel}
-              onDiscover={teamActions.openCatalog}
+              onDiscover={() => openCommunityCatalog("teams")}
               onShare={teamActions.openShare}
               onImport={() => {
                 teamImportInputRef.current?.click();
@@ -503,13 +516,17 @@ export function AgentsView() {
           }}
         />
       ) : null}
-      {personas.isCatalogDialogOpen ? (
-        <PersonaCatalogDialog
-          error={
+      {catalogLaunchTarget !== null ? (
+        <CommunityCatalogDialog
+          // Persona side
+          personas={personas.catalogPersonas}
+          personasError={
             personas.catalogQuery.error instanceof Error
               ? personas.catalogQuery.error
               : null
           }
+          personasLoading={personas.catalogQuery.isLoading}
+          personasPending={personas.isPending}
           feedbackErrorMessage={
             personas.personaFeedbackSurface === "catalog"
               ? personas.personaErrorMessage
@@ -520,34 +537,28 @@ export function AgentsView() {
               ? personas.personaNoticeMessage
               : null
           }
-          isLoading={personas.catalogQuery.isLoading}
-          isPending={personas.isPending}
-          onClearFeedback={() => {
-            personas.clearFeedback("catalog");
-          }}
-          onOpenChange={personas.setIsCatalogDialogOpen}
+          onClearFeedback={() => personas.clearFeedback("catalog")}
           onSelectPersona={(persona, active) => {
             void personas.handleSetActive(persona, active, "catalog");
           }}
-          open={personas.isCatalogDialogOpen}
-          personas={personas.catalogPersonas}
-        />
-      ) : null}
-      {teamActions.isCatalogDialogOpen ? (
-        <TeamCatalogDialog
-          error={
+          // Team side
+          teams={teamActions.catalogTeams}
+          teamsError={
             teamActions.catalogQuery.error instanceof Error
               ? teamActions.catalogQuery.error
               : null
           }
-          isAdding={teamActions.isAddingFromCatalog}
-          isLoading={teamActions.catalogQuery.isLoading}
+          teamsLoading={teamActions.catalogQuery.isLoading}
+          teamsAdding={teamActions.isAddingFromCatalog}
           onAddTeam={(team) => {
             void teamActions.handleAddTeamFromCatalog(team);
           }}
-          onOpenChange={teamActions.setIsCatalogDialogOpen}
-          open={teamActions.isCatalogDialogOpen}
-          teams={teamActions.catalogTeams}
+          // Dialog
+          open={catalogLaunchTarget !== null}
+          preferSection={catalogLaunchTarget}
+          onOpenChange={(open) => {
+            if (!open) setCatalogLaunchTarget(null);
+          }}
         />
       ) : null}
       {teamActions.teamDialogState ? (
