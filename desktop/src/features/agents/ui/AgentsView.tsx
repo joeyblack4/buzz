@@ -50,13 +50,10 @@ export function AgentsView() {
   const fullAiDefaultsTriggerRef = React.useRef<HTMLButtonElement>(null);
   const compactActionsTriggerRef = React.useRef<HTMLButtonElement>(null);
   const [isAiDefaultsOpen, setIsAiDefaultsOpen] = React.useState(false);
-  // Exclusivity: create never sets `personaDialogState` (edit/dup/import do),
-  // so the create-mode and definition-edit AgentDialog mounts never coexist.
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
 
-  function openUnifiedCreate() {
+  function openUnifiedCatalog() {
     personas.prepareCreate();
-    setIsCreateDialogOpen(true);
+    personas.openCatalog();
   }
 
   function openAiDefaults(trigger: HTMLButtonElement | null) {
@@ -257,8 +254,7 @@ export function AgentsView() {
               }
               isPersonasLoading={personas.personasQuery.isLoading}
               isPersonasPending={personas.isPending}
-              onCreatePersona={openUnifiedCreate}
-              onDiscoverPersonas={personas.openCatalog}
+              onOpenCatalog={openUnifiedCatalog}
               onDuplicatePersona={personas.openDuplicate}
               onEditPersona={personas.openEdit}
               onSharePersona={personas.openShare}
@@ -266,9 +262,6 @@ export function AgentsView() {
                 void personas.handleSetActive(persona, false, "library");
               }}
               onDeletePersona={personas.openDelete}
-              onImportSnapshotFile={(fileBytes, fileName) => {
-                void personas.handleImportSnapshotFile(fileBytes, fileName);
-              }}
             />
 
             <TeamsSection
@@ -305,29 +298,6 @@ export function AgentsView() {
         returnFocusRef={aiDefaultsTriggerRef}
       />
 
-      {isCreateDialogOpen ? (
-        <AgentDialog
-          definitionError={
-            personas.createPersonaMutation.error instanceof Error
-              ? personas.createPersonaMutation.error
-              : null
-          }
-          isDefinitionPending={personas.isPending}
-          mode="definition"
-          onOpenChange={(open) => {
-            if (!open) setIsCreateDialogOpen(false);
-          }}
-          onSubmitDefinition={personas.handleSubmit}
-          runtimes={personas.acpRuntimesQuery.data ?? []}
-          runtimeCatalogStatus={
-            personas.acpRuntimesQuery.isLoading
-              ? "loading"
-              : personas.acpRuntimesQuery.isError
-                ? "error"
-                : "ready"
-          }
-        />
-      ) : null}
       {agents.agentToAddToChannel ? (
         <AddAgentToChannelDialog
           agent={agents.agentToAddToChannel}
@@ -499,6 +469,32 @@ export function AgentsView() {
       ) : null}
       {personas.isCatalogDialogOpen ? (
         <PersonaCatalogDialog
+          createContent={({ onDirtyChange, onRequestClose }) => (
+            <AgentDialog
+              definitionError={
+                personas.createPersonaMutation.error instanceof Error
+                  ? personas.createPersonaMutation.error
+                  : null
+              }
+              embedded
+              isDefinitionPending={personas.isPending}
+              mode="definition"
+              onDirtyChange={onDirtyChange}
+              onOpenChange={(open) => {
+                if (!open) onRequestClose();
+              }}
+              onSubmitDefinition={personas.handleSubmit}
+              runtimes={personas.acpRuntimesQuery.data ?? []}
+              runtimeCatalogStatus={
+                personas.acpRuntimesQuery.isLoading
+                  ? "loading"
+                  : personas.acpRuntimesQuery.isError
+                    ? "error"
+                    : "ready"
+              }
+              submitLabel="Add agent"
+            />
+          )}
           error={
             personas.catalogQuery.error instanceof Error
               ? personas.catalogQuery.error
@@ -518,6 +514,9 @@ export function AgentsView() {
           isPending={personas.isPending}
           onClearFeedback={() => {
             personas.clearFeedback("catalog");
+          }}
+          onImportFile={(fileBytes, fileName) => {
+            void personas.handleImportSnapshotFile(fileBytes, fileName);
           }}
           onOpenChange={personas.setIsCatalogDialogOpen}
           onSelectPersona={(persona, active) => {
